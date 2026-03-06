@@ -29,6 +29,7 @@ public class TodoService(IDbContextFactory<ApplicationDbContext> factory)
     {
         using var db = await factory.CreateDbContextAsync();
         var query = db.Todos
+            .AsNoTracking()
             .Include(t => t.Cat)
             .Where(t => t.UserId == userId);
 
@@ -56,6 +57,7 @@ public class TodoService(IDbContextFactory<ApplicationDbContext> factory)
     {
         using var db = await factory.CreateDbContextAsync();
         return await db.Todos
+            .AsNoTracking()
             .Include(t => t.Cat)
             .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
     }
