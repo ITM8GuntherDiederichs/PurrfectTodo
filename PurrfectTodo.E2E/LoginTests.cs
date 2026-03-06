@@ -10,6 +10,7 @@ namespace PurrfectTodo.E2E;
 /// The <see cref="AppFixture"/> SetUpFixture ensures the app is up before
 /// this suite runs.
 /// </summary>
+[Category("E2E")]
 [TestFixture]
 [Parallelizable(ParallelScope.Self)]
 public class LoginTests : PageTest

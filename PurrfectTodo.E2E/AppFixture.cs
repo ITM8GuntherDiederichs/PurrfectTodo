@@ -8,11 +8,24 @@ namespace PurrfectTodo.E2E;
 /// http://localhost:5059 before any tests execute, and tears it down
 /// afterwards if this fixture started it.
 /// </summary>
+[Category("E2E")]
 [SetUpFixture]
 public class AppFixture
 {
     private static readonly string BaseUrl = "http://localhost:5059";
-    private static readonly string RunDevCmd = @"C:\data\itm8\Copilot\PurrfectTodo\run-dev.cmd";
+    private static readonly string RunDevCmd = FindRunDevCmd();
+
+    private static string FindRunDevCmd()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            var candidate = Path.Combine(dir.FullName, "run-dev.cmd");
+            if (File.Exists(candidate)) return candidate;
+            dir = dir.Parent;
+        }
+        throw new FileNotFoundException("run-dev.cmd not found walking up from " + AppContext.BaseDirectory);
+    }
     private static readonly TimeSpan StartupTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
 
