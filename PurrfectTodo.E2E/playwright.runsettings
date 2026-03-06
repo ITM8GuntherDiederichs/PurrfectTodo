@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <TestRunParameters>
+    <Parameter name="browser" value="chromium" />
+    <Parameter name="headless" value="true" />
+    <Parameter name="timeout" value="30000" />
+  </TestRunParameters>
+  <NUnit>
+    <NumberOfTestWorkers>1</NumberOfTestWorkers>
+  </NUnit>
+</RunSettings>
