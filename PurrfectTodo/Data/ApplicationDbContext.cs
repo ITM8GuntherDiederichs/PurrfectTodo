@@ -21,11 +21,20 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         base.OnModelCreating(builder);
 
+        // ── ApplicationUser ───────────────────────────────────────────────────
+        builder.Entity<ApplicationUser>()
+            .Property(u => u.FirstName)
+            .HasMaxLength(100);
+
+        builder.Entity<ApplicationUser>()
+            .Property(u => u.LastName)
+            .HasMaxLength(100);
+
         // ── Cat ──────────────────────────────────────────────────────────────
         builder.Entity<Cat>()
             .Property(c => c.Name)
             .IsRequired()
-            .HasMaxLength(200);
+            .HasMaxLength(100);
 
         builder.Entity<Cat>()
             .HasOne(c => c.User)
@@ -40,7 +49,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<Todo>()
             .Property(t => t.Title)
             .IsRequired()
-            .HasMaxLength(500);
+            .HasMaxLength(200);
 
         // Cat → Todo: cascade delete (deleting a cat deletes its todos)
         builder.Entity<Todo>()

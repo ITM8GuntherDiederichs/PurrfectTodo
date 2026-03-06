@@ -21,6 +21,7 @@ public class CatService(IDbContextFactory<ApplicationDbContext> factory)
     {
         using var db = await factory.CreateDbContextAsync();
         return await db.Cats
+            .AsNoTracking()
             .Where(c => c.UserId == userId)
             .OrderBy(c => c.Name)
             .ToListAsync();
@@ -33,6 +34,7 @@ public class CatService(IDbContextFactory<ApplicationDbContext> factory)
     {
         using var db = await factory.CreateDbContextAsync();
         return await db.Cats
+            .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
     }
 
