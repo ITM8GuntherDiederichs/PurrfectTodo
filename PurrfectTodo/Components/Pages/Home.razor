@@ -1,7 +1,146 @@
-﻿@page "/"
+@page "/"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize]
+@inject CatService CatService
+@inject TodoService TodoService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home - Purrfect Todo</PageTitle>
 
-<h1>Hello, world!</h1>
+@if (_initError != null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_initError</MudAlert>
+}
 
-Welcome to your new app.
+<MudText Typo="Typo.h4" Class="mb-1" Style="color:#E97D2B;font-weight:700;">
+    Welcome back &#x1F431;
+</MudText>
+<MudText Typo="Typo.subtitle1" Class="mb-6" Style="color:#6B4226;">
+    Here's how your cats are doing today.
+</MudText>
+
+<MudGrid Spacing="3" Class="mb-6">
+    <MudItem xs="12" sm="4">
+        <MudCard Elevation="2" Style="border-left:4px solid #F44336;">
+            <MudCardContent Class="d-flex align-items-center gap-3">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Style="font-size:2.5rem;color:#F44336;" />
+                <div>
+                    <MudText Typo="Typo.h4" Style="color:#F44336;font-weight:700;">@_overdueCount</MudText>
+                    <MudText Typo="Typo.body2" Style="color:#6B4226;">Overdue</MudText>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="4">
+        <MudCard Elevation="2" Style="border-left:4px solid #FF9800;">
+            <MudCardContent Class="d-flex align-items-center gap-3">
+                <MudIcon Icon="@Icons.Material.Filled.Schedule" Style="font-size:2.5rem;color:#FF9800;" />
+                <div>
+                    <MudText Typo="Typo.h4" Style="color:#FF9800;font-weight:700;">@_dueTodayCount</MudText>
+                    <MudText Typo="Typo.body2" Style="color:#6B4226;">Due Today</MudText>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="4">
+        <MudCard Elevation="2" Style="border-left:4px solid #E97D2B;">
+            <MudCardContent Class="d-flex align-items-center gap-3">
+                <MudIcon Icon="@Icons.Material.Filled.ListAlt" Style="font-size:2.5rem;color:#E97D2B;" />
+                <div>
+                    <MudText Typo="Typo.h4" Style="color:#E97D2B;font-weight:700;">@_totalIncompleteCount</MudText>
+                    <MudText Typo="Typo.body2" Style="color:#6B4226;">Total Incomplete</MudText>
+                </div>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+<MudGrid Spacing="3">
+    <MudItem xs="12" sm="6">
+        <MudCard Elevation="1">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6" Style="color:#E97D2B;">&#x1F431; My Cats</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                @if (_cats.Count == 0)
+                {
+                    <MudText Style="color:#6B4226;">No cats yet! Add your first cat &#x1F43E;</MudText>
+                }
+                else
+                {
+                    <MudList T="string" Dense="true">
+                        @foreach (var cat in _cats)
+                        {
+                            <MudListItem T="string" Icon="@Icons.Material.Filled.Pets"
+                                         IconColor="Color.Warning">
+                                @cat.Name
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Text" Color="Color.Primary"
+                           OnClick="@(() => NavigationManager.NavigateTo("/cats"))">
+                    Manage Cats
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudCard Elevation="1">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h6" Style="color:#E97D2B;">Quick Actions</MudText>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudText Class="mb-3" Style="color:#6B4226;">
+                    Keep your cats happy and healthy by staying on top of their care tasks.
+                </MudText>
+            </MudCardContent>
+            <MudCardActions>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="@(() => NavigationManager.NavigateTo("/todos"))">
+                    Add Todo
+                </MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="ms-2"
+                           OnClick="@(() => NavigationManager.NavigateTo("/todos"))">
+                    View All Todos
+                </MudButton>
+            </MudCardActions>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string _userId = "";
+    private string? _initError;
+    private List<Cat> _cats = [];
+    private int _overdueCount;
+    private int _dueTodayCount;
+    private int _totalIncompleteCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            _userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+            _cats = await CatService.GetCatsAsync(_userId);
+            var incompleteTodos = await TodoService.GetTodosAsync(_userId, isCompleted: false);
+            var today = DateTime.UtcNow.Date;
+            _totalIncompleteCount = incompleteTodos.Count;
+            _dueTodayCount = incompleteTodos.Count(t => t.DueDate.HasValue && t.DueDate.Value.Date == today);
+            _overdueCount = incompleteTodos.Count(t => t.DueDate.HasValue && t.DueDate.Value.Date < today);
+        }
+        catch (Exception ex)
+        {
+            _initError = ex.Message;
+        }
+    }
+}

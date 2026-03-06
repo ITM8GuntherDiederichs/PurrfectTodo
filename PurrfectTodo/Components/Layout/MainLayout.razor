@@ -1,23 +1,69 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
+<MudThemeProvider Theme="_catTheme" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Class="pt-appbar">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
+                       OnClick="@ToggleDrawer" />
+        <span class="pt-nav-brand ms-2">Purrfect Todo 🐾</span>
+        <MudSpacer />
+        <AuthorizeView>
+            <Authorized>
+                <span class="me-2 pt-user-name">@context.User.Identity?.Name</span>
+                <MudIcon Icon="@Icons.Material.Filled.Pets" Color="Color.Inherit" Class="me-1" />
+            </Authorized>
+        </AuthorizeView>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0"
+               Class="pt-drawer" Variant="DrawerVariant.Responsive">
         <NavMenu />
-    </div>
+    </MudDrawer>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
+    <MudMainContent>
+        <div class="pt-page-content pa-4">
             @Body
-        </article>
-    </main>
-</div>
+        </div>
+    </MudMainContent>
+</MudLayout>
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    <span class="dismiss">&#x2715;</span>
 </div>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private MudTheme _catTheme = new MudTheme
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#E97D2B",
+            PrimaryContrastText = "#FFFFFF",
+            Secondary = "#6B4226",
+            SecondaryContrastText = "#FFFFFF",
+            Tertiary = "#F5C57A",
+            Background = "#FFF8F2",
+            Surface = "#FFFFFF",
+            DrawerBackground = "#3D1F0D",
+            DrawerText = "#F5E6D3",
+            AppbarBackground = "#E97D2B",
+            AppbarText = "#FFFFFF",
+            TextPrimary = "#3D1F0D",
+            TextSecondary = "#6B4226",
+            ActionDefault = "#E97D2B",
+            Success = "#4CAF50",
+            Warning = "#FF9800",
+            Error = "#F44336",
+            Info = "#2196F3"
+        }
+    };
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+}

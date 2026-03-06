@@ -1,30 +1,75 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">PurrfectTodo</a>
+@implements IDisposable
+@inject NavigationManager NavigationManager
+
+<MudNavMenu>
+    <div class="px-3 py-3">
+        <span class="pt-drawer-brand">Purrfect Todo &#x1F43E;</span>
     </div>
-</div>
+    <MudDivider Class="mb-2" Style="border-color:rgba(245,199,122,0.25)" />
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+    <AuthorizeView>
+        <Authorized>
+            <MudNavLink Href="" Icon="@Icons.Material.Filled.Dashboard" Match="NavLinkMatch.All"
+                        ActiveClass="pt-nav-active">
+                Home
+            </MudNavLink>
+            <MudNavLink Href="cats" Icon="@Icons.Material.Filled.Pets" Match="NavLinkMatch.Prefix"
+                        ActiveClass="pt-nav-active">
+                My Cats
+            </MudNavLink>
+            <MudNavLink Href="todos" Icon="@Icons.Material.Filled.CheckCircle" Match="NavLinkMatch.Prefix"
+                        ActiveClass="pt-nav-active">
+                Todos
+            </MudNavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+            <AuthorizeView Roles="Admin" Context="adminCtx">
+                <MudDivider Class="my-2" Style="border-color:rgba(245,199,122,0.15)" />
+                <MudNavLink Href="admin/users" Icon="@Icons.Material.Filled.AdminPanelSettings"
+                            Match="NavLinkMatch.Prefix" ActiveClass="pt-nav-active">
+                    Users
+                </MudNavLink>
+            </AuthorizeView>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
+            <MudDivider Class="my-2" Style="border-color:rgba(245,199,122,0.15)" />
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+            <MudNavLink Href="Account/Manage" Icon="@Icons.Material.Filled.ManageAccounts"
+                        Match="NavLinkMatch.Prefix" ActiveClass="pt-nav-active">
+                @context.User.Identity?.Name
+            </MudNavLink>
+            <form action="Account/Logout" method="post" style="margin:0">
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                <button type="submit" class="pt-logout-btn">
+                    <MudIcon Icon="@Icons.Material.Filled.Logout" Style="font-size:1.1rem;margin-right:0.5rem;" />
+                    Logout
+                </button>
+            </form>
+        </Authorized>
+        <NotAuthorized>
+            <MudNavLink Href="Account/Register" Icon="@Icons.Material.Filled.PersonAdd" Match="NavLinkMatch.Prefix">
+                Register
+            </MudNavLink>
+            <MudNavLink Href="Account/Login" Icon="@Icons.Material.Filled.Login" Match="NavLinkMatch.Prefix">
+                Login
+            </MudNavLink>
+        </NotAuthorized>
+    </AuthorizeView>
+</MudNavMenu>
 
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose() => NavigationManager.LocationChanged -= OnLocationChanged;
+}
