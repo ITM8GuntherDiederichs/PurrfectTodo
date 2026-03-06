@@ -18,8 +18,8 @@ public class LoginTests : PageTest
     // ── Constants ─────────────────────────────────────────────────────────────
 
     private const string BaseUrl       = "http://localhost:5059";
-    private const string AdminEmail    = "admin@purrfecttodo.local";
-    private const string AdminPassword = "Admin1234!";
+    private const string AdminEmail    = "test@purrfecttodo.local";
+    private const string AdminPassword = "Test1234!";
     private const string WrongPassword = "WrongPass1!";
 
     // ── Helpers ───────────────────────────────────────────────────────────────

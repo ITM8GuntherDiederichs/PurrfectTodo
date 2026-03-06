@@ -19,6 +19,7 @@ public class DataSeeder(
     {
         await SeedRolesAsync();
         await SeedSystemAccountAsync();
+        await SeedTestAccountAsync();
     }
 
     private async Task SeedRolesAsync()
@@ -81,5 +82,36 @@ public class DataSeeder(
 
         if (!await userManager.IsInRoleAsync(user, RoleNames.Admin))
             await userManager.AddToRoleAsync(user, RoleNames.Admin);
+    }
+
+    private async Task SeedTestAccountAsync()
+    {
+        const string email = "test@purrfecttodo.local";
+        const string password = "Test1234!";
+
+        var user = await userManager.FindByEmailAsync(email);
+        if (user is null)
+        {
+            user = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true,
+                FirstName = "Test",
+                LastName = "User"
+            };
+            var createResult = await userManager.CreateAsync(user, password);
+            if (!createResult.Succeeded)
+            {
+                logger.LogError(
+                    "Failed to create test account: {Errors}",
+                    string.Join(", ", createResult.Errors.Select(e => e.Description)));
+                return;
+            }
+            logger.LogInformation("Test account created: {Email}", email);
+        }
+
+        if (!await userManager.IsInRoleAsync(user, RoleNames.User))
+            await userManager.AddToRoleAsync(user, RoleNames.User);
     }
 }
