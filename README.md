@@ -17,6 +17,20 @@ A cat-themed todo application built with .NET 10, Blazor Server, MudBlazor, Enti
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - SQL Server (local or Azure)
 
+### Configuration & Secrets
+
+The connection string placeholder in `appsettings.json` points to LocalDB for development.
+
+For the admin account password, set it via [.NET User Secrets](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets):
+
+```bash
+cd PurrfectTodo
+dotnet user-secrets set "SystemAccount:Password" "YourPassword123!"
+```
+
+The admin account (`admin@purrfecttodo.local`) is seeded on startup using this password.  
+If no password is configured, a random one is generated and logged as a warning.
+
 ### Run Locally
 
 ```bash
