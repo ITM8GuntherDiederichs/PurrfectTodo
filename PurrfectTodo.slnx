@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="PurrfectTodo.Tests/PurrfectTodo.Tests.csproj" />
+  <Project Path="PurrfectTodo/PurrfectTodo.csproj" />
+</Solution>

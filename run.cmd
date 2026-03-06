@@ -1,0 +1,1 @@
+cd PurrfectTodo && dotnet run
