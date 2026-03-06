@@ -1,0 +1,270 @@
+@page "/cats"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize]
+@inject CatService CatService
+@inject TodoService TodoService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>My Cats - Purrfect Todo</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1" Style="color:#E97D2B;font-weight:700;">
+    My Cats &#x1F431;
+</MudText>
+<MudText Typo="Typo.subtitle1" Class="mb-4" Style="color:#6B4226;">
+    Manage your furry family members.
+</MudText>
+
+@if (_initError != null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_initError</MudAlert>
+}
+
+@if (_cats.Count == 0 && !_showAddForm)
+{
+    <MudPaper Class="pa-8 text-center" Elevation="1" Style="background:#FFF8F2;">
+        <MudText Typo="Typo.h5" Style="color:#6B4226;">No cats yet! Add your first cat &#x1F43E;</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="@(() => _showAddForm = true)">
+            Add First Cat
+        </MudButton>
+    </MudPaper>
+}
+else
+{
+    <div class="d-flex justify-end mb-4">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="OpenAddForm">
+            Add Cat
+        </MudButton>
+    </div>
+}
+
+@if (_showAddForm)
+{
+    <MudCard Class="mb-4" Elevation="2">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6" Style="color:#E97D2B;">Add New Cat &#x1F43E;</MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudTextField T="string" Label="Cat Name" @bind-Value="_newCatName"
+                          Placeholder="e.g. Whiskers" Immediate="true"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Pets"
+                          AdornmentColor="Color.Primary"
+                          Variant="Variant.Outlined" Class="mb-2" />
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="AddCatAsync" Disabled="@(string.IsNullOrWhiteSpace(_newCatName))">
+                Save
+            </MudButton>
+            <MudButton Variant="Variant.Text" Class="ms-2" OnClick="CancelAdd">Cancel</MudButton>
+        </MudCardActions>
+    </MudCard>
+}
+
+<MudGrid Spacing="3">
+    @foreach (var cat in _cats)
+    {
+        <MudItem xs="12" sm="6" md="4">
+            @if (_editingCatId == cat.Id)
+            {
+                <MudCard Elevation="3" Style="border:2px solid #E97D2B;">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Style="color:#E97D2B;">Edit Cat</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTextField T="string" Label="Cat Name" @bind-Value="_editCatName"
+                                      Variant="Variant.Outlined" Immediate="true" />
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                   OnClick="@(() => SaveEditAsync(cat))"
+                                   Disabled="@(string.IsNullOrWhiteSpace(_editCatName))">
+                            Save
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" Class="ms-2" OnClick="CancelEdit">Cancel</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            }
+            else if (_confirmDeleteCatId == cat.Id)
+            {
+                <MudCard Elevation="3" Style="border:2px solid #F44336;">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6" Style="color:#F44336;">Delete Cat?</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudText>Are you sure you want to delete <strong>@cat.Name</strong>?</MudText>
+                        @if (_deleteTodoCount > 0)
+                        {
+                            <MudAlert Severity="Severity.Warning" Class="mt-2">
+                                This will also delete <strong>@_deleteTodoCount</strong> todo(s) for this cat.
+                            </MudAlert>
+                        }
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Filled" Color="Color.Error"
+                                   OnClick="@(() => ConfirmDeleteAsync(cat.Id))">
+                            Delete
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" Class="ms-2" OnClick="CancelDelete">Cancel</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            }
+            else
+            {
+                <MudCard Elevation="2">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Style="background:#F5C57A;color:#3D1F0D;font-size:1.4rem;">&#x1F431;</MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">@cat.Name</MudText>
+                            <MudText Typo="Typo.caption" Style="color:#6B4226;">
+                                Added @cat.CreatedAt.ToString("MMM d, yyyy")
+                            </MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary"
+                                           Size="Size.Small" OnClick="@(() => StartEdit(cat))"
+                                           title="Edit cat name" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
+                                           Size="Size.Small" OnClick="@(() => StartDeleteAsync(cat.Id))"
+                                           title="Delete cat" />
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                </MudCard>
+            }
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    private string _userId = "";
+    private string? _initError;
+    private List<Cat> _cats = [];
+
+    private bool _showAddForm;
+    private string _newCatName = "";
+
+    private Guid? _editingCatId;
+    private string _editCatName = "";
+
+    private Guid? _confirmDeleteCatId;
+    private int _deleteTodoCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            _userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+            await LoadCatsAsync();
+        }
+        catch (Exception ex)
+        {
+            _initError = ex.Message;
+        }
+    }
+
+    private async Task LoadCatsAsync()
+    {
+        _cats = await CatService.GetCatsAsync(_userId);
+    }
+
+    private void OpenAddForm()
+    {
+        _newCatName = "";
+        _showAddForm = true;
+    }
+
+    private void CancelAdd()
+    {
+        _showAddForm = false;
+        _newCatName = "";
+    }
+
+    private async Task AddCatAsync()
+    {
+        try
+        {
+            var cat = new Cat { Name = _newCatName.Trim() };
+            await CatService.CreateCatAsync(cat, _userId);
+            Snackbar.Add($"&#x1F431; {cat.Name} added!", Severity.Success);
+            _showAddForm = false;
+            _newCatName = "";
+            await LoadCatsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding cat: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void StartEdit(Cat cat)
+    {
+        _editingCatId = cat.Id;
+        _editCatName = cat.Name;
+        _confirmDeleteCatId = null;
+    }
+
+    private void CancelEdit()
+    {
+        _editingCatId = null;
+        _editCatName = "";
+    }
+
+    private async Task SaveEditAsync(Cat cat)
+    {
+        try
+        {
+            cat.Name = _editCatName.Trim();
+            await CatService.UpdateCatAsync(cat, _userId);
+            Snackbar.Add("Cat name updated! &#x1F43E;", Severity.Success);
+            _editingCatId = null;
+            await LoadCatsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating cat: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task StartDeleteAsync(Guid catId)
+    {
+        _confirmDeleteCatId = catId;
+        _editingCatId = null;
+        var todos = await TodoService.GetTodosAsync(_userId, catId: catId);
+        _deleteTodoCount = todos.Count;
+    }
+
+    private void CancelDelete()
+    {
+        _confirmDeleteCatId = null;
+        _deleteTodoCount = 0;
+    }
+
+    private async Task ConfirmDeleteAsync(Guid catId)
+    {
+        try
+        {
+            await CatService.DeleteCatAsync(catId, _userId);
+            Snackbar.Add("Cat deleted.", Severity.Info);
+            _confirmDeleteCatId = null;
+            _deleteTodoCount = 0;
+            await LoadCatsAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting cat: {ex.Message}", Severity.Error);
+        }
+    }
+}

@@ -1,0 +1,345 @@
+@page "/todos"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize]
+@inject CatService CatService
+@inject TodoService TodoService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>Todos - Purrfect Todo</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1" Style="color:#E97D2B;font-weight:700;">Todo List</MudText>
+<MudText Typo="Typo.subtitle1" Class="mb-4" Style="color:#6B4226;">Keep track of your cats care tasks.</MudText>
+
+@if (_initError != null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_initError</MudAlert>
+}
+
+<MudPaper Class="pa-3 mb-4" Elevation="1" Style="background:#FFF3E8;">
+    <MudGrid Spacing="2">
+        <MudItem xs="12" sm="3">
+            <MudSelect T="Guid?" Label="Cat" @bind-Value="_filterCatId" Variant="Variant.Outlined"
+                       Dense="true" Clearable="true">
+                @foreach (var cat in _cats)
+                {
+                    <MudSelectItem T="Guid?" Value="@((Guid?)cat.Id)">&#x1F431; @cat.Name</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="3">
+            <MudSelect T="Category?" Label="Category" @bind-Value="_filterCategory"
+                       Variant="Variant.Outlined" Dense="true" Clearable="true">
+                <MudSelectItem T="Category?" Value="@((Category?)Category.Feeding)">Feeding</MudSelectItem>
+                <MudSelectItem T="Category?" Value="@((Category?)Category.Vet)">Vet</MudSelectItem>
+                <MudSelectItem T="Category?" Value="@((Category?)Category.Grooming)">Grooming</MudSelectItem>
+                <MudSelectItem T="Category?" Value="@((Category?)Category.Playtime)">Playtime</MudSelectItem>
+                <MudSelectItem T="Category?" Value="@((Category?)Category.Medication)">Medication</MudSelectItem>
+                <MudSelectItem T="Category?" Value="@((Category?)Category.Other)">Other</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="2">
+            <MudSelect T="Priority?" Label="Priority" @bind-Value="_filterPriority"
+                       Variant="Variant.Outlined" Dense="true" Clearable="true">
+                <MudSelectItem T="Priority?" Value="@((Priority?)Priority.High)">High</MudSelectItem>
+                <MudSelectItem T="Priority?" Value="@((Priority?)Priority.Medium)">Medium</MudSelectItem>
+                <MudSelectItem T="Priority?" Value="@((Priority?)Priority.Low)">Low</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" sm="2">
+            <MudCheckBox T="bool" @bind-Value="_showCompleted" Label="Show completed" Color="Color.Primary" />
+        </MudItem>
+        <MudItem xs="12" sm="2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small"
+                       OnClick="ApplyFiltersAsync" FullWidth="true">Filter</MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<div class="d-flex justify-end mb-3">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Add" OnClick="OpenAddForm">
+        Add Todo
+    </MudButton>
+</div>
+
+@if (_showForm)
+{
+    <MudCard Class="mb-4" Elevation="2" Style="border-left:4px solid #E97D2B;">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6" Style="color:#E97D2B;">
+                    @(_editingTodoId.HasValue ? "Edit Todo" : "Add New Todo")
+                </MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudGrid Spacing="2">
+                <MudItem xs="12">
+                    <MudTextField T="string" Label="Title" @bind-Value="_formTitle"
+                                  Placeholder="e.g. Feed Whiskers at 6pm"
+                                  Variant="Variant.Outlined" Immediate="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="color:#6B4226;font-weight:600;">Cat</MudText>
+                    <MudRadioGroup T="Guid" @bind-Value="_formCatId">
+                        @foreach (var cat in _cats)
+                        {
+                            <MudRadio T="Guid" Value="@cat.Id" Color="Color.Primary">&#x1F431; @cat.Name</MudRadio>
+                        }
+                    </MudRadioGroup>
+                    @if (_cats.Count == 0)
+                    {
+                        <MudText Typo="Typo.caption" Style="color:#C62828;">Please add a cat first.</MudText>
+                    }
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="color:#6B4226;font-weight:600;">Category</MudText>
+                    <MudRadioGroup T="Category" @bind-Value="_formCategory">
+                        <MudRadio T="Category" Value="Category.Feeding" Color="Color.Primary">Feeding</MudRadio>
+                        <MudRadio T="Category" Value="Category.Vet" Color="Color.Primary">Vet</MudRadio>
+                        <MudRadio T="Category" Value="Category.Grooming" Color="Color.Primary">Grooming</MudRadio>
+                        <MudRadio T="Category" Value="Category.Playtime" Color="Color.Primary">Playtime</MudRadio>
+                        <MudRadio T="Category" Value="Category.Medication" Color="Color.Primary">Medication</MudRadio>
+                        <MudRadio T="Category" Value="Category.Other" Color="Color.Primary">Other</MudRadio>
+                    </MudRadioGroup>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="color:#6B4226;font-weight:600;">Priority</MudText>
+                    <MudRadioGroup T="Priority" @bind-Value="_formPriority">
+                        <MudRadio T="Priority" Value="Priority.Low" Color="Color.Success">Low</MudRadio>
+                        <MudRadio T="Priority" Value="Priority.Medium" Color="Color.Warning">Medium</MudRadio>
+                        <MudRadio T="Priority" Value="Priority.High" Color="Color.Error">High</MudRadio>
+                    </MudRadioGroup>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker Label="Due Date" @bind-Date="_formDueDate"
+                                   Variant="Variant.Outlined" Clearable="true" DateFormat="yyyy-MM-dd" />
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveTodoAsync"
+                       Disabled="@(string.IsNullOrWhiteSpace(_formTitle) || _formCatId == Guid.Empty)">
+                @(_editingTodoId.HasValue ? "Save Changes" : "Add Todo")
+            </MudButton>
+            <MudButton Variant="Variant.Text" Class="ms-2" OnClick="CancelForm">Cancel</MudButton>
+        </MudCardActions>
+    </MudCard>
+}
+
+@if (_todos.Count == 0)
+{
+    <MudPaper Class="pa-8 text-center" Elevation="1" Style="background:#FFF8F2;">
+        <MudText Typo="Typo.h5" Style="color:#6B4226;">All done! Your cats are well cared for &#x1F43E;</MudText>
+    </MudPaper>
+}
+else
+{
+    <MudPaper Elevation="1">
+        @foreach (var todo in _todos)
+        {
+            var isOverdue = !todo.IsCompleted && todo.DueDate.HasValue && todo.DueDate.Value.Date < DateTime.UtcNow.Date;
+            <MudDivider />
+            <div style="@(isOverdue ? "background:#FFEBEE;" : "background:#FFFFFF;") transition:background 0.15s;">
+                <div style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.5rem;">
+                    <MudCheckBox T="bool" Value="@todo.IsCompleted"
+                                 ValueChanged="@((v) => ToggleCompleteAsync(todo, v))"
+                                 Color="Color.Primary" />
+                    <div style="flex:1;min-width:0;@(todo.IsCompleted ? "opacity:0.55;text-decoration:line-through;" : "")">
+                        <MudText Typo="Typo.body1">@todo.Title</MudText>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+                            <MudChip T="string" Size="Size.Small" Style="background:#F5C57A;color:#3D1F0D;">
+                                &#x1F431; @(todo.Cat?.Name ?? "--")
+                            </MudChip>
+                            <MudChip T="string" Size="Size.Small" Style="background:#E0E0E0;color:#333;">
+                                @GetCategoryLabel(todo.Category)
+                            </MudChip>
+                            <MudChip T="string" Size="Size.Small" Style="@GetPriorityStyle(todo.Priority)">
+                                @todo.Priority
+                            </MudChip>
+                            @if (todo.DueDate.HasValue)
+                            {
+                                <MudChip T="string" Size="Size.Small"
+                                         Style="@(isOverdue ? "background:#FFEBEE;color:#C62828;" : "background:#E8F5E9;color:#2E7D32;")">
+                                    @todo.DueDate.Value.ToString("MMM d")
+                                </MudChip>
+                            }
+                        </div>
+                    </div>
+                    <div style="flex-shrink:0;display:flex;">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small"
+                                       Color="Color.Primary" OnClick="@(() => StartEditTodo(todo))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                       Color="Color.Error" OnClick="@(() => DeleteTodoAsync(todo.Id))" />
+                    </div>
+                </div>
+            </div>
+        }
+    </MudPaper>
+}
+
+@code {
+    private string _userId = "";
+    private string? _initError;
+    private List<Cat> _cats = [];
+    private List<Todo> _todos = [];
+
+    private Guid? _filterCatId;
+    private Category? _filterCategory;
+    private Priority? _filterPriority;
+    private bool _showCompleted;
+
+    private bool _showForm;
+    private Guid? _editingTodoId;
+    private string _formTitle = "";
+    private Guid _formCatId;
+    private Category _formCategory = Category.Other;
+    private Priority _formPriority = Priority.Medium;
+    private DateTime? _formDueDate;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            _userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+            _cats = await CatService.GetCatsAsync(_userId);
+            await LoadTodosAsync();
+        }
+        catch (Exception ex)
+        {
+            _initError = ex.Message;
+        }
+    }
+
+    private async Task LoadTodosAsync()
+    {
+        bool? completed = _showCompleted ? null : (bool?)false;
+        _todos = await TodoService.GetTodosAsync(_userId,
+            catId: _filterCatId,
+            category: _filterCategory,
+            priority: _filterPriority,
+            isCompleted: completed);
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        try { await LoadTodosAsync(); }
+        catch (Exception ex) { Snackbar.Add(ex.Message, Severity.Error); }
+    }
+
+    private void OpenAddForm()
+    {
+        _editingTodoId = null;
+        _formTitle = "";
+        _formCatId = _cats.FirstOrDefault()?.Id ?? Guid.Empty;
+        _formCategory = Category.Other;
+        _formPriority = Priority.Medium;
+        _formDueDate = null;
+        _showForm = true;
+    }
+
+    private void StartEditTodo(Todo todo)
+    {
+        _editingTodoId = todo.Id;
+        _formTitle = todo.Title;
+        _formCatId = todo.CatId;
+        _formCategory = todo.Category;
+        _formPriority = todo.Priority;
+        _formDueDate = todo.DueDate;
+        _showForm = true;
+    }
+
+    private void CancelForm()
+    {
+        _showForm = false;
+        _editingTodoId = null;
+    }
+
+    private async Task SaveTodoAsync()
+    {
+        try
+        {
+            if (_editingTodoId.HasValue)
+            {
+                var todo = new Todo
+                {
+                    Id = _editingTodoId.Value,
+                    Title = _formTitle.Trim(),
+                    CatId = _formCatId,
+                    Category = _formCategory,
+                    Priority = _formPriority,
+                    DueDate = _formDueDate
+                };
+                await TodoService.UpdateTodoAsync(todo, _userId);
+                Snackbar.Add("Todo updated!", Severity.Success);
+            }
+            else
+            {
+                var todo = new Todo
+                {
+                    Title = _formTitle.Trim(),
+                    CatId = _formCatId,
+                    Category = _formCategory,
+                    Priority = _formPriority,
+                    DueDate = _formDueDate
+                };
+                await TodoService.CreateTodoAsync(todo, _userId);
+                Snackbar.Add("Todo added!", Severity.Success);
+            }
+            _showForm = false;
+            _editingTodoId = null;
+            await LoadTodosAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ToggleCompleteAsync(Todo todo, bool complete)
+    {
+        try
+        {
+            await TodoService.CompleteTodoAsync(todo.Id, _userId, complete);
+            await LoadTodosAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeleteTodoAsync(Guid id)
+    {
+        try
+        {
+            await TodoService.DeleteTodoAsync(id, _userId);
+            Snackbar.Add("Todo deleted.", Severity.Info);
+            await LoadTodosAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private static string GetCategoryLabel(Category category) => category switch
+    {
+        Category.Feeding => "Feeding",
+        Category.Vet => "Vet",
+        Category.Grooming => "Grooming",
+        Category.Playtime => "Playtime",
+        Category.Medication => "Medication",
+        _ => "Other"
+    };
+
+    private static string GetPriorityStyle(Priority priority) => priority switch
+    {
+        Priority.High => "background:#FFEBEE;color:#C62828;",
+        Priority.Medium => "background:#FFF3E0;color:#E65100;",
+        _ => "background:#E8F5E9;color:#2E7D32;"
+    };
+}
+

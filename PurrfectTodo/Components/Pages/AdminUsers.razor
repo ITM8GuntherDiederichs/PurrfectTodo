@@ -1,0 +1,98 @@
+@page "/admin/users"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@inject AdminService AdminService
+@inject ISnackbar Snackbar
+
+<PageTitle>Users - Admin - Purrfect Todo</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-1" Style="color:#E97D2B;font-weight:700;">User Management</MudText>
+<MudText Typo="Typo.subtitle1" Class="mb-4" Style="color:#6B4226;">Manage all registered users.</MudText>
+
+@if (_initError != null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@_initError</MudAlert>
+}
+
+<MudDataGrid T="ApplicationUser" Items="@_users" Filterable="true"
+             Striped="true" Hover="true" Elevation="2" Dense="true">
+    <Columns>
+        <PropertyColumn Property="u => u.Email" Title="Email" />
+        <TemplateColumn Title="Name">
+            <CellTemplate>
+                @{
+                    var name = $"{context.Item.FirstName} {context.Item.LastName}".Trim();
+                }
+                @(string.IsNullOrWhiteSpace(name) ? "—" : name)
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="u => u.CreatedAt" Title="Joined" Format="yyyy-MM-dd" />
+        <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
+            <CellTemplate>
+                @if (_confirmDeleteUserId == context.Item.Id)
+                {
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <MudText Typo="Typo.caption" Style="color:#C62828;">Delete @context.Item.Email?</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
+                                   OnClick="@(() => ConfirmDeleteUserAsync(context.Item.Id))">Confirm</MudButton>
+                        <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="CancelDeleteUser">Cancel</MudButton>
+                    </div>
+                }
+                else
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                   OnClick="@(() => StartDeleteUser(context.Item.Id))" title="Delete user" />
+                }
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</MudDataGrid>
+
+@code {
+    private List<ApplicationUser> _users = [];
+    private string? _initError;
+    private string? _confirmDeleteUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            _initError = ex.Message;
+        }
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        _users = await AdminService.GetAllUsersAsync();
+    }
+
+    private void StartDeleteUser(string userId)
+    {
+        _confirmDeleteUserId = userId;
+    }
+
+    private void CancelDeleteUser()
+    {
+        _confirmDeleteUserId = null;
+    }
+
+    private async Task ConfirmDeleteUserAsync(string userId)
+    {
+        try
+        {
+            await AdminService.DeleteUserAsync(userId);
+            Snackbar.Add("User deleted.", Severity.Info);
+            _confirmDeleteUserId = null;
+            await LoadUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+}
+
