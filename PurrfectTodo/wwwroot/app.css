@@ -3,6 +3,176 @@ html, body {
     background-color: #FFF8F2;
 }
 
+/* ===================================================
+   Cat Theme CSS Variables
+   =================================================== */
+:root {
+    --fw-accent-1: #E97D2B;
+    --fw-accent-2: #6B4226;
+    --fw-accent-light: #F5C57A;
+    --fw-bg: #FFF8F2;
+    --fw-text-primary: #3D1F0D;
+    --fw-text-secondary: #6B4226;
+    --fw-surface: #FFFFFF;
+}
+
+/* ===================================================
+   Auth Page Layout — fw-auth-bg, fw-glass-card, etc.
+   =================================================== */
+
+.fw-auth-bg {
+    min-height: calc(100vh - 64px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #FFF8F2 0%, #F5E6D3 100%);
+    padding: 2rem;
+    /* Counteract the pa-4 (1rem) padding from pt-page-content */
+    margin: -1rem;
+}
+
+.fw-glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1.5px solid rgba(233, 125, 43, 0.25);
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(107, 66, 38, 0.18);
+}
+
+.fw-auth-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 2.5rem;
+}
+
+/* Bug 1 fix — logo icon: constrain size so the emoji is never oversized */
+.fw-auth-logo {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #E97D2B;
+    text-align: center;
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.01em;
+}
+
+.fw-auth-subtitle {
+    text-align: center;
+    color: #6B4226;
+    font-size: 0.88rem;
+    margin-bottom: 1.75rem;
+}
+
+/* ===================================================
+   SSR Input Controls (used on auth forms)
+   =================================================== */
+
+.ssr-input-control {
+    margin-bottom: 1rem;
+}
+
+.ssr-input-control label {
+    display: block;
+    font-weight: 600;
+    color: #3D1F0D;
+    margin-bottom: 0.35rem;
+    font-size: 0.88rem;
+}
+
+.ssr-input-control input {
+    width: 100%;
+    padding: 0.62rem 0.9rem;
+    border: 1.5px solid #dbb99a;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #3D1F0D;
+    font-size: 0.95rem;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.ssr-input-control input:focus {
+    outline: none;
+    border-color: #E97D2B;
+    box-shadow: 0 0 0 3px rgba(233, 125, 43, 0.18);
+}
+
+/* ===================================================
+   Auth Buttons
+   =================================================== */
+
+.fw-auth-btn {
+    width: 100%;
+    padding: 0.72rem;
+    background: #E97D2B;
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    margin-bottom: 0.5rem;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+}
+
+.fw-auth-btn:hover {
+    background: #d06b1a;
+}
+
+.fw-auth-btn:active {
+    transform: scale(0.98);
+}
+
+/* ===================================================
+   Auth Divider
+   =================================================== */
+
+.fw-auth-divider {
+    text-align: center;
+    color: #6B4226;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    margin: 0.85rem 0;
+    position: relative;
+}
+
+.fw-auth-divider::before,
+.fw-auth-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 38%;
+    height: 1px;
+    background: rgba(107, 66, 38, 0.22);
+}
+
+.fw-auth-divider::before { left: 0; }
+.fw-auth-divider::after  { right: 0; }
+
+/* ===================================================
+   Auth Links
+   =================================================== */
+
+.fw-auth-links {
+    text-align: center;
+    margin-top: 1.25rem;
+    font-size: 0.84rem;
+    color: #6B4226;
+}
+
+.fw-auth-links a {
+    color: #E97D2B;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.fw-auth-links a:hover {
+    text-decoration: underline;
+    color: #d06b1a;
+}
+
 a, .btn-link {
     color: #006bb7;
 }
