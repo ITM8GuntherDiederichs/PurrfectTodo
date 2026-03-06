@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace PurrfectTodo.Data;
 
 /// <summary>
@@ -21,6 +23,7 @@ public class Todo
     public ApplicationUser User { get; set; } = null!;
 
     /// <summary>Gets or sets the title of the todo.</summary>
+    [MaxLength(500)]
     public string Title { get; set; } = "";
 
     /// <summary>Gets or sets the category of the care task.</summary>

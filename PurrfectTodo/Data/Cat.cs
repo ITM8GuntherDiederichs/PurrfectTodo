@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace PurrfectTodo.Data;
 
 /// <summary>
@@ -15,6 +17,7 @@ public class Cat
     public ApplicationUser User { get; set; } = null!;
 
     /// <summary>Gets or sets the cat's name.</summary>
+    [MaxLength(100)]
     public string Name { get; set; } = "";
 
     /// <summary>Gets or sets the UTC date/time when the cat record was created.</summary>
